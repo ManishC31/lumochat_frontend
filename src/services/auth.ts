@@ -78,7 +78,9 @@ export const fetchCurrentUser = async () => {
       throw new Error(data?.message || "Not authenticated.");
     }
 
-    return data?.user || data?.data?.user || data?.data || data;
+    // Returns { user, token } — token is used to restore localStorage on page reload
+    const payload = data?.data ?? data;
+    return { user: payload?.user ?? payload, token: payload?.token ?? null };
   } catch (error) {
     throw error;
   }

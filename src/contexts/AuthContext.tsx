@@ -45,8 +45,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   useEffect(() => {
     const restoreSession = async () => {
       try {
-        const sessionUser = await fetchCurrentUser();
+        const { user: sessionUser, token } = await fetchCurrentUser();
         if (sessionUser && typeof sessionUser === "object") {
+          if (token) localStorage.setItem("chat_token", token);
           setUser(sessionUser as AuthUser);
           setIsAuthenticated(true);
           connectSocket(sessionUser as AuthUser);
@@ -115,7 +116,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const refreshUser = async () => {
     try {
-      const sessionUser = await fetchCurrentUser();
+      const { user: sessionUser } = await fetchCurrentUser();
       if (sessionUser && typeof sessionUser === "object") {
         setUser(sessionUser as AuthUser);
       }
