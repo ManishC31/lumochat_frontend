@@ -61,21 +61,21 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     };
 
     restoreSession();
-  // connectSocket intentionally omitted — it's stable and we only want this on mount
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // connectSocket intentionally omitted — it's stable and we only want this on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const login = async (payload: LoginUserPayload) => {
     try {
       const response = await loginUser(payload);
-      const responseUser = response?.user || response?.data?.user || response?.data || response;
+      const responseUser = response?.data?.user;
 
       if (!responseUser) {
         throw new Error("Login succeeded but user data was not returned.");
       }
 
-      if (response?.token) {
-        localStorage.setItem("chat_token", response.token);
+      if (response?.data?.token) {
+        localStorage.setItem("chat_token", response.data.token);
       }
       setUser(responseUser);
       setIsAuthenticated(true);
@@ -88,11 +88,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const register = async (payload: RegisterUserPayload) => {
     try {
       const response = await registerNewUser(payload);
-      const responseUser = response?.user || response?.data?.user || response?.data || response;
+      const responseUser = response?.data?.user;
 
       if (responseUser) {
-        if (response?.token) {
-          localStorage.setItem("chat_token", response.token);
+        if (response?.data?.token) {
+          localStorage.setItem("chat_token", response.data.token);
         }
         setUser(responseUser);
         setIsAuthenticated(true);
@@ -132,6 +132,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     const token = localStorage.getItem("chat_token");
 
+    console.log("token:", token);
+
     const newSocket = io(SOCKET_URL, {
       transports: ["polling", "websocket"],
       reconnection: true,
@@ -153,6 +155,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     });
 
     newSocket.on("connect_error", (error) => {
+      console.error("FAILED TO CONNECT WEBSOCKET");
       console.error("Socket connection error:", error);
     });
 
@@ -166,5 +169,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  return <AuthContext.Provider value={{ isAuthenticated, user, login, register, logout, refreshUser, loading, socket }}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={{ isAuthenticated, user, login, register, logout, refreshUser, loading, socket }}>{children}</AuthContext.Provider>
+  );
 };
