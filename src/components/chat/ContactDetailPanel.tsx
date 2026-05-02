@@ -145,8 +145,8 @@ const ContactDetailPanel = ({ contact, open, onClose }: ContactDetailPanelProps)
                 <div className="flex flex-col items-center px-5 pb-5 pt-2">
                   <div
                     className={cn(
-                      "w-24 h-24 rounded-full flex items-center justify-center text-white font-bold text-3xl overflow-hidden",
-                      isGroupContact ? "bg-gradient-to-br from-rose-100 to-pink-200" : contactColor,
+                      "w-24 h-24 rounded-full flex items-center justify-center text-white font-bold text-3xl overflow-hidden bg-gradient-to-br",
+                      isGroupContact ? "from-rose-100 to-pink-200" : contactColor,
                     )}
                   >
                     {contact.image ? (
@@ -165,15 +165,11 @@ const ContactDetailPanel = ({ contact, open, onClose }: ContactDetailPanelProps)
                   )}
                 </div>
 
-                {/* About */}
+                {/* Status */}
                 <div className="border-t border-border/60 px-5 py-4">
-                  <h4 className="text-[13px] font-semibold text-foreground mb-1.5">
-                    {isGroupContact ? "About this group" : "About"}
-                  </h4>
-                  <p className="text-[13px] text-muted-foreground leading-relaxed">
-                    {isGroupContact
-                      ? "A shared group chat on CircleChat for members to stay connected and coordinate instantly."
-                      : `${contact.name} — connecting through CircleChat.`}
+                  <h4 className="text-[13px] font-semibold text-foreground mb-1.5">Status</h4>
+                  <p className="text-[13px] text-muted-foreground leading-relaxed italic">
+                    {contact.status ? `"${contact.status}"` : "No status set"}
                   </p>
                 </div>
               </div>

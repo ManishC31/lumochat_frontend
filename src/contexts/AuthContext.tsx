@@ -17,6 +17,7 @@ interface AuthContextType {
   login: (payload: LoginUserPayload) => Promise<void>;
   register: (payload: RegisterUserPayload) => Promise<void>;
   logout: () => Promise<void>;
+  refreshUser: () => Promise<void>;
   loading: boolean;
   socket: Socket;
 }
@@ -105,6 +106,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  const refreshUser = async () => {
+    try {
+      const sessionUser = await fetchCurrentUser();
+      if (sessionUser && typeof sessionUser === "object") {
+        setUser(sessionUser as AuthUser);
+      }
+    } catch {
+      // silently ignore — user stays as-is
+    }
+  };
+
   // Helper function to extract token from cookies
   const getTokenFromCookie = (): string | null => {
     const cookies = document.cookie.split("; ");
@@ -160,5 +172,5 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  return <AuthContext.Provider value={{ isAuthenticated, user, login, register, logout, loading, socket }}>{children}</AuthContext.Provider>;
+  return <AuthContext.Provider value={{ isAuthenticated, user, login, register, logout, refreshUser, loading, socket }}>{children}</AuthContext.Provider>;
 };

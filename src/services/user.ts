@@ -1,5 +1,18 @@
 import { BACKEND_URL } from "@/config/backend";
 
+export const updateUserAvatar = async (file: File) => {
+  const formData = new FormData();
+  formData.append("avatar", file);
+  const response = await fetch(`${BACKEND_URL}/user/avatar`, {
+    method: "PATCH",
+    credentials: "include",
+    body: formData,
+  });
+  const data = await response.json().catch(() => null);
+  if (!response.ok) throw new Error(data?.message || "Failed to update avatar.");
+  return data;
+};
+
 type UpdateUserType = {
   name: string;
   status: string;

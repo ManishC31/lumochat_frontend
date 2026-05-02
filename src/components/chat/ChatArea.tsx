@@ -3,7 +3,6 @@ import {
   ArrowLeft,
   Send,
   Paperclip,
-  Smile,
   Phone,
   Video,
   MoreVertical,
@@ -174,7 +173,7 @@ const ChatArea = ({ contact, onContactClick, onBack }: ChatAreaProps) => {
       sender: senderName,
       isOwn,
       time,
-      status: isOwn ? "delivered" : undefined,
+      status: isOwn ? (msg.is_read ? "read" : "delivered") : undefined,
       attachments: msg.file
         ? [
             {
@@ -294,7 +293,6 @@ const ChatArea = ({ contact, onContactClick, onBack }: ChatAreaProps) => {
         sender: newMessage.sender?.name || contact?.name || "Unknown",
         isOwn: false,
         time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-        status: "delivered",
         attachments: newMessage.file
           ? [{ name: newMessage.file.split("/").pop() || "attachment", type: detectFileType(newMessage.file), url: newMessage.file }]
           : undefined,
@@ -302,9 +300,25 @@ const ChatArea = ({ contact, onContactClick, onBack }: ChatAreaProps) => {
       setMessages((prev) => [...prev, formattedMessage]);
       setIsTyping(false);
 
+      // Receiver is actively viewing this chat — mark as read immediately
+      const senderId = String(newMessage.sender?.id ?? newMessage.sender_id ?? "");
+      if (senderId) {
+        socket.emit("markRead", {
+          connectionId: String(newMessage.connection_id),
+          senderId,
+        });
+      }
+
       window.requestAnimationFrame(() => {
         scrollContainerRef.current?.scrollTo({ top: scrollContainerRef.current.scrollHeight });
       });
+    };
+
+    const handleMessagesRead = ({ connectionId }: { connectionId: string }) => {
+      if (!contact || String(contact.id) !== String(connectionId)) return;
+      setMessages((prev) =>
+        prev.map((m) => (m.isOwn && m.status === "delivered" ? { ...m, status: "read" } : m)),
+      );
     };
 
     const handleTyping = ({ senderId }: { senderId: string }) => {
@@ -320,11 +334,13 @@ const ChatArea = ({ contact, onContactClick, onBack }: ChatAreaProps) => {
     };
 
     socket.on("newMessage", handleNewMessage);
+    socket.on("messagesRead", handleMessagesRead);
     socket.on("typing", handleTyping);
     socket.on("stop_typing", handleStopTyping);
 
     return () => {
       socket.off("newMessage", handleNewMessage);
+      socket.off("messagesRead", handleMessagesRead);
       socket.off("typing", handleTyping);
       socket.off("stop_typing", handleStopTyping);
     };
@@ -462,7 +478,7 @@ const ChatArea = ({ contact, onContactClick, onBack }: ChatAreaProps) => {
 
   if (!contact) {
     return (
-      <div className="flex-1 flex items-center justify-center chat-pattern">
+      <div className="h-full flex items-center justify-center chat-pattern">
         <div className="text-center space-y-4 opacity-0 animate-scale-in" style={{ animationFillMode: "forwards" }}>
           <div className="w-20 h-20 rounded-3xl avatar-gradient flex items-center justify-center mx-auto shadow-glow">
             <Send className="w-8 h-8 text-primary-foreground" />
@@ -497,8 +513,8 @@ const ChatArea = ({ contact, onContactClick, onBack }: ChatAreaProps) => {
             <div className="relative shrink-0">
               <div
                 className={cn(
-                  "w-11 h-11 rounded-full flex items-center justify-center text-white font-semibold text-sm overflow-hidden",
-                  isGroupContact ? "bg-gradient-to-br from-rose-100 to-pink-200" : contactColor,
+                  "w-11 h-11 rounded-full flex items-center justify-center text-white font-semibold text-sm overflow-hidden bg-gradient-to-br",
+                  isGroupContact ? "from-rose-100 to-pink-200" : contactColor,
                 )}
               >
                 {contact.image ? (
@@ -767,9 +783,6 @@ const ChatArea = ({ contact, onContactClick, onBack }: ChatAreaProps) => {
         <div className="flex items-center gap-2 max-w-3xl mx-auto">
           {/* Pill input with emoji icon inside */}
           <div className="flex-1 flex items-center bg-muted/60 rounded-full px-4 py-2">
-            <button className="text-muted-foreground hover:text-foreground transition-colors shrink-0 mr-2">
-              <Smile className="w-[20px] h-[20px]" />
-            </button>
             <textarea
               value={message}
               onChange={handleMessageChange}

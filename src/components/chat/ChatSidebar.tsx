@@ -1,11 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Search, Users, Settings, LogOut, Edit2, Camera, Bell, Moon, Sun, Pin, MessageSquare, CheckCheck, Check, X, UserCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useAuth } from "@/contexts/AuthContext";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogTitle, DialogHeader } from "@/components/ui/dialog";
-import { getRequestsOfUser, updateUserData } from "@/services/user";
+import { getRequestsOfUser, updateUserData, updateUserAvatar } from "@/services/user";
 import { acceptRequestConnection, getAllConnections, sendNewConnectionRequest } from "@/services/connections";
 import { toast } from "sonner";
 
@@ -15,6 +15,7 @@ export interface ChatContact {
   name: string;
   email?: string;
   image?: string;
+  status?: string;
   lastMessage?: string;
   time?: string;
   unread?: number;
@@ -64,7 +65,7 @@ interface IRequests {
 
 export { avatarColors };
 
-type Tab = "personal" | "groups" | "requests";
+type Tab = "personal" | "requests";
 
 const ChatSidebar = ({ selectedId, onSelect, onContactClick, fullWidth }: ChatSidebarProps) => {
   const [search, setSearch] = useState("");
@@ -74,7 +75,7 @@ const ChatSidebar = ({ selectedId, onSelect, onContactClick, fullWidth }: ChatSi
   const [contacts, setContacts] = useState<ChatContact[] | null>(null);
   const [requests, setRequests] = useState<IRequests[] | null>(null);
 
-  const { logout, user, socket } = useAuth();
+  const { logout, user, socket, refreshUser } = useAuth();
 
   const currentUser: CurrentUser = {
     name: user?.name ?? "Guest User",
@@ -86,14 +87,19 @@ const ChatSidebar = ({ selectedId, onSelect, onContactClick, fullWidth }: ChatSi
 
   const [editName, setEditName] = useState(currentUser.name);
   const [editStatus, setEditStatus] = useState(currentUser.status);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [avatarUploading, setAvatarUploading] = useState(false);
+  const avatarFileRef = useRef<HTMLInputElement>(null);
   const [requestEmail, setRequestEmail] = useState<string>("");
-  const [darkMode, setDarkMode] = useState(() => document.documentElement.classList.contains("dark"));
+  const [darkMode, setDarkMode] = useState(() => localStorage.getItem("theme") === "dark");
 
   useEffect(() => {
     if (darkMode) {
       document.documentElement.classList.add("dark");
+      localStorage.setItem("theme", "dark");
     } else {
       document.documentElement.classList.remove("dark");
+      localStorage.setItem("theme", "light");
     }
   }, [darkMode]);
 
@@ -166,6 +172,7 @@ const ChatSidebar = ({ selectedId, onSelect, onContactClick, fullWidth }: ChatSi
             name: item.name || item.email || "Unknown",
             email: item.email,
             image: item.image,
+            status: item.status ?? undefined,
             lastMessage: item.last_message ?? undefined,
             time: rawTime,
             unread: item.unread,
@@ -208,7 +215,6 @@ const ChatSidebar = ({ selectedId, onSelect, onContactClick, fullWidth }: ChatSi
 
   const tabs: { id: Tab; label: string }[] = [
     { id: "personal", label: "Personal" },
-    { id: "groups", label: "Groups" },
     { id: "requests", label: "Requests" },
   ];
 
@@ -258,16 +264,50 @@ const ChatSidebar = ({ selectedId, onSelect, onContactClick, fullWidth }: ChatSi
     setRequests((prev) => prev?.filter((item) => item.first_user !== request.first_user || item.second_user !== request.second_user) ?? null);
   };
 
-  const handleUserDataUpdate = async () => {
-    const response = await updateUserData({ name: editName, status: editStatus });
-
-    if (response.success) {
-      toast.success(response.message);
-      logout();
-    } else {
-      toast.error(response.message);
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("Only image files are allowed.");
+      return;
     }
-    // setSettingsOpen(false);
+
+    const previewUrl = URL.createObjectURL(file);
+    setAvatarPreview(previewUrl);
+    setAvatarUploading(true);
+
+    try {
+      const response = await updateUserAvatar(file);
+      if (response.success) {
+        toast.success("Avatar updated.");
+        await refreshUser();
+      } else {
+        toast.error(response.message || "Failed to update avatar.");
+        setAvatarPreview(null);
+      }
+    } catch (err) {
+      toast.error((err as Error)?.message || "Failed to update avatar.");
+      setAvatarPreview(null);
+    } finally {
+      URL.revokeObjectURL(previewUrl);
+      setAvatarUploading(false);
+      e.target.value = "";
+    }
+  };
+
+  const handleUserDataUpdate = async () => {
+    try {
+      const response = await updateUserData({ name: editName, status: editStatus });
+      if (response.success) {
+        toast.success(response.message || "Profile updated.");
+        await refreshUser();
+        setSettingsOpen(false);
+      } else {
+        toast.error(response.message || "Failed to update profile.");
+      }
+    } catch (err) {
+      toast.error((err as Error)?.message || "Failed to update profile.");
+    }
   };
 
   return (
@@ -425,14 +465,37 @@ const ChatSidebar = ({ selectedId, onSelect, onContactClick, fullWidth }: ChatSi
           </DialogHeader>
           <div className="space-y-6 pt-2">
             <div className="flex justify-center">
-              <div className="relative group cursor-pointer">
-                {/* <div className="w-24 h-24 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-white font-bold text-3xl shadow-medium">
-                  ET
-                </div> */}
-                <div className="absolute inset-0 rounded-full bg-foreground/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all">
+              <div
+                className="relative group cursor-pointer"
+                onClick={() => !avatarUploading && avatarFileRef.current?.click()}
+              >
+                <div className="w-24 h-24 rounded-full overflow-hidden bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-white font-bold text-3xl shadow-medium">
+                  {avatarPreview || currentUser.image ? (
+                    <img
+                      src={avatarPreview ?? currentUser.image}
+                      alt={currentUser.name}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <span>
+                      {currentUser.name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()}
+                    </span>
+                  )}
+                </div>
+                <div className="absolute inset-0 rounded-full bg-foreground/50 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-all gap-1">
                   <Camera className="w-6 h-6 text-background" />
+                  <span className="text-[10px] text-background font-semibold">
+                    {avatarUploading ? "Uploading…" : "Change"}
+                  </span>
                 </div>
               </div>
+              <input
+                ref={avatarFileRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleAvatarChange}
+              />
             </div>
 
             <div className="space-y-4">

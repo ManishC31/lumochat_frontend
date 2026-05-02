@@ -1,6 +1,5 @@
 import { MessageCircle, Shield, Zap, Users, CheckCheck, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import GoogleIcon from "@/components/GoogleIcon";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import PreviewSection from "@/components/PreviewSection";
@@ -59,7 +58,7 @@ const AuthenticationPage = () => {
 
       {/* Right Panel — login */}
       <div className="w-full lg:w-1/2 flex items-center justify-center p-8">
-        <div className="w-full max-w-md space-y-8 opacity-0 animate-fade-in" style={{ animationDelay: "0.2s" }}>
+        <form onSubmit={handleSubmit} className="w-full max-w-md space-y-8 opacity-0 animate-fade-in" style={{ animationDelay: "0.2s" }}>
           {/* Mobile logo */}
           <div className="lg:hidden flex items-center gap-3 mb-4">
             <div className="w-10 h-10 rounded-2xl bg-primary flex items-center justify-center shadow-glow">
@@ -69,8 +68,12 @@ const AuthenticationPage = () => {
           </div>
 
           <div>
-            <h2 className="text-3xl font-bold tracking-tight text-foreground">Welcome back</h2>
-            <p className="text-muted-foreground mt-2 text-[15px]">Sign in to continue your conversations</p>
+            <h2 className="text-3xl font-bold tracking-tight text-foreground">
+              {currentForm === "login" ? "Welcome back" : "Create your account"}
+            </h2>
+            <p className="text-muted-foreground mt-2 text-[15px]">
+              {currentForm === "login" ? "Sign in to LumoChat to continue chatting" : "Join LumoChat and start connecting"}
+            </p>
           </div>
 
           {/* Email input (visual) */}
@@ -119,8 +122,8 @@ const AuthenticationPage = () => {
           </div>
 
           <Button
+            type="submit"
             className="w-full h-12 text-[15px] font-semibold rounded-full bg-primary text-primary-foreground hover:bg-primary/90 shadow-glow transition-all disabled:opacity-60 disabled:cursor-not-allowed"
-            onClick={handleSubmit}
             disabled={isSubmitting}
           >
             {currentForm === "register" ? "Sign Up" : "Sign In"}
@@ -156,22 +159,6 @@ const AuthenticationPage = () => {
             )}
           </div>
 
-          {/* Divider */}
-          <div className="flex items-center gap-3">
-            <div className="flex-1 h-px bg-border" />
-            <span className="text-[11px] text-muted-foreground font-medium uppercase tracking-wider">Or</span>
-            <div className="flex-1 h-px bg-border" />
-          </div>
-
-          <Button
-            className="w-full h-12 text-[15px] font-medium gap-3 rounded-full border border-border bg-card text-foreground hover:bg-muted/60 hover:border-primary/30 transition-all"
-            variant="outline"
-            onClick={() => alert("Google authentication is not yet configured")}
-          >
-            <GoogleIcon />
-            Continue with Google
-          </Button>
-
           <p className="text-xs text-center text-muted-foreground leading-relaxed">
             By continuing, you agree to LumoChat's{" "}
             <a href="#" className="text-primary hover:underline">
@@ -182,7 +169,7 @@ const AuthenticationPage = () => {
               Privacy Policy
             </a>
           </p>
-        </div>
+        </form>
       </div>
     </div>
   );
