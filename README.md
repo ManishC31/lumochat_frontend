@@ -27,8 +27,7 @@ src/
 │   │   └── ContactDetailPanel.tsx# Shared media viewer for a conversation
 │   ├── PreviewSection.tsx        # Left-side branding panel on the auth page
 │   ├── ProtectedRoute.tsx        # Redirects unauthenticated users to /
-│   ├── ChatBubble.tsx            # Individual message bubble
-│   └── GoogleIcon.tsx            # Google SVG icon for the OAuth button
+│   └── ChatBubble.tsx            # Individual message bubble
 ├── pages/
 │   ├── Authentication.tsx        # Login / register page (tabs)
 │   ├── Chat.tsx                  # Main chat layout (sidebar + area + detail panel)
@@ -36,7 +35,7 @@ src/
 ├── contexts/
 │   └── AuthContext.tsx           # Auth state, current user, socket lifecycle
 ├── services/                     # Thin wrappers around the REST API
-│   ├── auth.ts                   # signup, signin, signout, google auth
+│   ├── auth.ts                   # signup, signin, signout
 │   ├── connections.ts            # get contacts, send/accept/reject requests
 │   ├── message.ts                # send message, fetch messages, fetch media
 │   └── user.ts                   # get profile, update profile
@@ -52,9 +51,7 @@ src/
 ## How It Was Built
 
 ### Authentication
-The auth page (`Authentication.tsx`) has two tabs — **Sign In** and **Sign Up** — powered by React Hook Form with Zod validation schemas. On success the server sets an HTTP-only `token` cookie; `AuthContext` stores the decoded user object in React state and makes it available app-wide.
-
-Google OAuth is wired up on the backend (Google Identity Services). The frontend sends the credential token to `POST /api/auth/google`.
+The auth page (`Authentication.tsx`) has two tabs — **Sign In** and **Sign Up** — powered by React Hook Form with Zod validation schemas. On success the server returns a JWT stored in `localStorage`; `AuthContext` stores the decoded user object in React state and makes it available app-wide.
 
 ### Routing & Protection
 React Router v6 with three routes:
@@ -72,7 +69,7 @@ React Router v6 with three routes:
 | `typing` | Shows the "… is typing" indicator |
 | `stop_typing` | Hides the typing indicator |
 
-The socket is authenticated via a JWT cookie checked on the server before the connection is accepted.
+The socket is authenticated via the JWT from `localStorage`, passed in the handshake `auth` object and verified by the server before the connection is accepted.
 
 ### Message Pagination
 `ChatArea` fetches messages in pages of 15 using `offset` + `limit` query params. An `IntersectionObserver` on the top sentinel element triggers the next page load as the user scrolls up, prepending older messages without re-rendering the whole list.
