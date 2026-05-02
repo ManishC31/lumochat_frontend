@@ -73,6 +73,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         throw new Error("Login succeeded but user data was not returned.");
       }
 
+      if (response?.token) {
+        localStorage.setItem("chat_token", response.token);
+      }
       setUser(responseUser);
       setIsAuthenticated(true);
       connectSocket(responseUser);
@@ -87,6 +90,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const responseUser = response?.user || response?.data?.user || response?.data || response;
 
       if (responseUser) {
+        if (response?.token) {
+          localStorage.setItem("chat_token", response.token);
+        }
         setUser(responseUser);
         setIsAuthenticated(true);
         connectSocket(responseUser);
@@ -100,6 +106,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       await logoutUser();
     } finally {
+      localStorage.removeItem("chat_token");
       disconnectSocket();
       setUser(null);
       setIsAuthenticated(false);
@@ -117,32 +124,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  // Helper function to extract token from cookies
-  const getTokenFromCookie = (): string | null => {
-    const cookies = document.cookie.split("; ");
-    for (const cookie of cookies) {
-      const [name, value] = cookie.split("=");
-      if (name === "token") {
-        return decodeURIComponent(value);
-      }
-    }
-    return null;
-  };
-
   const connectSocket = (connectedUser: AuthUser) => {
-    // Disconnect existing socket if any
     if (socket) {
       socket.disconnect();
     }
 
-    const token = getTokenFromCookie();
+    const token = localStorage.getItem("chat_token");
 
     const newSocket = io(SOCKET_URL, {
+      transports: ["websocket", "polling"],
       reconnection: true,
       reconnectionDelay: 1000,
       reconnectionDelayMax: 5000,
-      // No reconnectionAttempts limit — default is Infinity so the socket
-      // keeps retrying whenever the backend is temporarily unavailable.
       auth: {
         token: token,
         userId: connectedUser.id,
