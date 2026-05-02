@@ -1,0 +1,155 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 220 20% 97%;
+    --foreground: 222 30% 12%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222 30% 12%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 30% 12%;
+
+    --primary: 217 91% 60%;
+    --primary-foreground: 0 0% 100%;
+    --primary-glow: 213 94% 68%;
+
+    --secondary: 220 25% 96%;
+    --secondary-foreground: 220 30% 25%;
+
+    --muted: 220 20% 95%;
+    --muted-foreground: 220 10% 50%;
+
+    --accent: 142 71% 45%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 72% 55%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 18% 92%;
+    --input: 220 18% 92%;
+    --ring: 217 91% 60%;
+
+    --radius: 1rem;
+
+    --brand-gradient: linear-gradient(135deg, hsl(217 91% 60%), hsl(213 94% 68%));
+    --brand-panel: linear-gradient(160deg, hsl(220 30% 18%), hsl(220 35% 12%));
+
+    --chat-pattern: hsl(220 20% 97%);
+    --chat-own-bubble: 217 91% 60%;
+    --chat-other-bubble: 0 0% 100%;
+
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 222 30% 18%;
+    --sidebar-primary: 217 91% 60%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 25% 96%;
+    --sidebar-accent-foreground: 222 30% 15%;
+    --sidebar-border: 220 18% 94%;
+    --sidebar-ring: 217 91% 60%;
+
+    --shadow-sm: 0 1px 2px 0 hsl(220 30% 10% / 0.03);
+    --shadow-md: 0 2px 8px -2px hsl(220 30% 10% / 0.06);
+    --shadow-lg: 0 8px 24px -6px hsl(220 30% 10% / 0.10);
+    --shadow-glow: 0 4px 16px -2px hsl(217 91% 60% / 0.25);
+  }
+
+  .dark {
+    --background: 228 20% 8%;
+    --foreground: 220 20% 95%;
+
+    --card: 228 22% 11%;
+    --card-foreground: 220 20% 95%;
+
+    --popover: 228 22% 11%;
+    --popover-foreground: 220 20% 95%;
+
+    --primary: 250 70% 65%;
+    --primary-foreground: 0 0% 100%;
+    --primary-glow: 270 75% 70%;
+
+    --secondary: 228 18% 16%;
+    --secondary-foreground: 220 20% 90%;
+
+    --muted: 228 16% 15%;
+    --muted-foreground: 225 15% 55%;
+
+    --accent: 160 60% 50%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 62.8% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 228 16% 18%;
+    --input: 228 16% 18%;
+    --ring: 250 70% 65%;
+
+    --chat-pattern: hsl(228 16% 10%);
+    --chat-own-bubble: 250 70% 65%;
+    --chat-other-bubble: 228 22% 15%;
+
+    --sidebar-background: 228 22% 10%;
+    --sidebar-foreground: 220 20% 90%;
+    --sidebar-primary: 250 70% 65%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 228 16% 16%;
+    --sidebar-accent-foreground: 220 20% 90%;
+    --sidebar-border: 228 16% 16%;
+    --sidebar-ring: 250 70% 65%;
+
+    --shadow-sm: 0 1px 2px 0 hsl(0 0% 0% / 0.2);
+    --shadow-md: 0 4px 12px -2px hsl(0 0% 0% / 0.3);
+    --shadow-lg: 0 8px 30px -4px hsl(0 0% 0% / 0.4);
+    --shadow-glow: 0 0 20px -4px hsl(250 70% 65% / 0.3);
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: 'DM Sans', system-ui, sans-serif;
+  }
+}
+
+@layer utilities {
+  .glass {
+    backdrop-filter: blur(12px) saturate(180%);
+    -webkit-backdrop-filter: blur(12px) saturate(180%);
+  }
+
+  .chat-pattern {
+    background-color: var(--chat-pattern);
+    background-image:
+      radial-gradient(ellipse 4px 2px at center, hsl(var(--muted-foreground) / 0.08) 50%, transparent 51%),
+      radial-gradient(ellipse 4px 2px at center, hsl(var(--muted-foreground) / 0.08) 50%, transparent 51%);
+    background-size: 56px 56px, 56px 56px;
+    background-position: 0 0, 28px 28px;
+  }
+
+  .avatar-gradient {
+    background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-glow)));
+  }
+
+  .avatar-gradient-accent {
+    background: linear-gradient(135deg, hsl(var(--accent)), hsl(160 50% 55%));
+  }
+
+  .hover-lift {
+    @apply transition-all duration-200;
+  }
+  .hover-lift:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+  }
+
+  .input-glass {
+    @apply bg-muted/60 border border-border/50 backdrop-blur-sm;
+  }
+}
