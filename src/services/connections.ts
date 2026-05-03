@@ -17,12 +17,12 @@ export const getAllConnections = async () => {
     const data = await response.json().catch(() => null);
 
     if (!response.ok) {
-      const message = data.message || "Failed to fetch connections";
-      throw new Error(message);
+      throw new Error(data?.error || data?.message || "Failed to fetch connections");
     }
 
     return data;
   } catch (error) {
+    if (error instanceof Error) throw error;
     throw new Error("Unexpected error while fetching connections");
   }
 };
@@ -40,12 +40,12 @@ export const acceptRequestConnection = async (connectionId: string) => {
     const data = await response.json().catch(() => null);
 
     if (!response.ok) {
-      const message = data.message || "Failed to accept connection request.";
-      throw new Error(message);
+      throw new Error(data?.error || data?.message || "Failed to accept connection request.");
     }
 
     return data;
   } catch (error) {
+    if (error instanceof Error) throw error;
     throw new Error("Unexpected error while accepting connection request.");
   }
 };
@@ -64,12 +64,12 @@ export const sendNewConnectionRequest = async (payload: NewConnectionRequest) =>
     const data = await response.json().catch(() => null);
 
     if (!response.ok) {
-      const message = data.message || "Failed to send new connection request";
-      throw new Error(message);
+      throw new Error(data?.error || data?.message || "Failed to send new connection request");
     }
 
     return data;
   } catch (error) {
+    if (error instanceof Error) throw error;
     throw new Error("Unexpected error while sending new connection request");
   }
 };

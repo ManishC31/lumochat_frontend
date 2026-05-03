@@ -73,6 +73,8 @@ const ChatSidebar = ({ selectedId, onSelect, onContactClick, fullWidth }: ChatSi
   const [avatarUploading, setAvatarUploading] = useState(false);
   const avatarFileRef = useRef<HTMLInputElement>(null);
   const [requestEmail, setRequestEmail] = useState("");
+  const [connectionError, setConnectionError] = useState("");
+  const [profileError, setProfileError] = useState("");
   const [darkMode, setDarkMode] = useState(() => localStorage.getItem("theme") === "dark");
 
   useEffect(() => {
@@ -185,16 +187,18 @@ const ChatSidebar = ({ selectedId, onSelect, onContactClick, fullWidth }: ChatSi
   };
 
   const handleNewRequest = async () => {
+    setConnectionError("");
     try {
       const response = await sendNewConnectionRequest({ email: requestEmail });
       if (response.success) {
         toast.success(response.message || "Connection request sent successfully.");
         setConnectionOpen(false);
+        setRequestEmail("");
       } else {
-        toast.error(response.message || "Failed to send connection request.");
+        setConnectionError(response.error || response.message || "Failed to send connection request.");
       }
     } catch (error) {
-      toast.error((error as Error)?.message || "Unexpected error while sending connection request.");
+      setConnectionError((error as Error)?.message || "Unexpected error while sending connection request.");
     }
   };
 
@@ -245,6 +249,7 @@ const ChatSidebar = ({ selectedId, onSelect, onContactClick, fullWidth }: ChatSi
   };
 
   const handleUserDataUpdate = async () => {
+    setProfileError("");
     try {
       const response = await updateUserData({ name: editName, status: editStatus });
       if (response.success) {
@@ -252,10 +257,10 @@ const ChatSidebar = ({ selectedId, onSelect, onContactClick, fullWidth }: ChatSi
         await refreshUser();
         setSettingsOpen(false);
       } else {
-        toast.error(response.message || "Failed to update profile.");
+        setProfileError(response.error || response.message || "Failed to update profile.");
       }
     } catch (err) {
-      toast.error((err as Error)?.message || "Failed to update profile.");
+      setProfileError((err as Error)?.message || "Failed to update profile.");
     }
   };
 
@@ -340,7 +345,7 @@ const ChatSidebar = ({ selectedId, onSelect, onContactClick, fullWidth }: ChatSi
 
       <EditProfileDialog
         open={settingsOpen}
-        onOpenChange={setSettingsOpen}
+        onOpenChange={(v) => { setSettingsOpen(v); if (!v) setProfileError(""); }}
         currentUser={currentUser}
         editName={editName}
         setEditName={setEditName}
@@ -351,14 +356,16 @@ const ChatSidebar = ({ selectedId, onSelect, onContactClick, fullWidth }: ChatSi
         avatarFileRef={avatarFileRef}
         onAvatarChange={handleAvatarChange}
         onSave={handleUserDataUpdate}
+        error={profileError}
       />
 
       <AddConnectionDialog
         open={connectionOpen}
-        onOpenChange={setConnectionOpen}
+        onOpenChange={(v) => { setConnectionOpen(v); if (!v) { setConnectionError(""); setRequestEmail(""); } }}
         requestEmail={requestEmail}
         setRequestEmail={setRequestEmail}
         onSend={handleNewRequest}
+        error={connectionError}
       />
     </div>
   );

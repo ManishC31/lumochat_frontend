@@ -31,12 +31,12 @@ export const getRequestsOfUser = async () => {
     const data = await response.json().catch(() => null);
 
     if (!response.ok) {
-      const message = data?.message || "Failed to fetch requests for user";
-      throw new Error(message);
+      throw new Error(data?.error || data?.message || "Failed to fetch requests for user");
     }
 
     return data;
   } catch (error) {
+    if (error instanceof Error) throw error;
     throw new Error("Unexpected error while fetching requests for user.");
   }
 };
@@ -55,12 +55,12 @@ export const updateUserData = async (payload: UpdateUserType) => {
     const data = await response.json().catch(() => null);
 
     if (!response.ok) {
-      const message = data?.message || "Failed to update user details";
-      throw new Error(message);
+      throw new Error(data?.error || data?.message || "Failed to update user details");
     }
 
     return data;
   } catch (error) {
+    if (error instanceof Error) throw error;
     throw new Error("Unexpected error while updating user details.");
   }
 };

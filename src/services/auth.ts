@@ -25,12 +25,12 @@ export const registerNewUser = async (payload: RegisterUserPayload) => {
     const data = await response.json().catch(() => null);
 
     if (!response.ok) {
-      const message = data?.message || "Failed to register user.";
-      throw new Error(message);
+      throw new Error(data?.error || data?.message || "Failed to register user.");
     }
 
     return data;
   } catch (error) {
+    if (error instanceof Error) throw error;
     throw new Error("Unexpected error while registering user.");
   }
 };
@@ -49,8 +49,7 @@ export const loginUser = async (payload: LoginUserPayload) => {
     const data = await response.json().catch(() => null);
 
     if (!response.ok) {
-      const message = data?.message || "Failed to login user.";
-      throw new Error(message);
+      throw new Error(data?.error || data?.message || "Failed to login user.");
     }
 
     return {
@@ -58,6 +57,7 @@ export const loginUser = async (payload: LoginUserPayload) => {
       user: data?.user || data?.data?.user || data?.data || data,
     };
   } catch (error) {
+    if (error instanceof Error) throw error;
     throw new Error("Unexpected error while logging in user.");
   }
 };

@@ -1,9 +1,17 @@
-import { MessageCircle, Shield, Zap, Users, CheckCheck, Eye, EyeOff } from "lucide-react";
+import { MessageCircle, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import PreviewSection from "@/components/PreviewSection";
 import { useAuth } from "@/contexts/AuthContext";
+
+interface FieldErrors {
+  name?: string;
+  email?: string;
+  password?: string;
+}
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const AuthenticationPage = () => {
   const [name, setName] = useState("");
@@ -11,6 +19,7 @@ const AuthenticationPage = () => {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [currentForm, setCurrentForm] = useState<"login" | "register">("login");
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [formError, setFormError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { login, register, isAuthenticated } = useAuth();
@@ -22,16 +31,44 @@ const AuthenticationPage = () => {
     }
   }, [isAuthenticated, navigate]);
 
-  // submit form for login and register user.
-  const handleSubmit = async (e: any) => {
+  const switchForm = (form: "login" | "register") => {
+    setCurrentForm(form);
+    setFieldErrors({});
+    setFormError("");
+  };
+
+  const validate = (): FieldErrors => {
+    const errors: FieldErrors = {};
+
+    if (currentForm === "register" && !name.trim()) {
+      errors.name = "Name is required.";
+    }
+
+    if (!email.trim()) {
+      errors.email = "Email is required.";
+    } else if (!EMAIL_RE.test(email)) {
+      errors.email = "Please enter a valid email address.";
+    }
+
+    if (!password) {
+      errors.password = "Password is required.";
+    } else if (currentForm === "register" && password.length < 6) {
+      errors.password = "Password must be at least 6 characters.";
+    }
+
+    return errors;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError("");
 
-    if (!email || !password || (currentForm === "register" && !name)) {
-      setFormError("Please fill in all fields.");
+    const errors = validate();
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
       return;
     }
-
+    setFieldErrors({});
     setIsSubmitting(true);
 
     try {
@@ -40,7 +77,6 @@ const AuthenticationPage = () => {
         navigate("/chat");
       } else {
         await register({ name: name.trim(), email, password });
-        // After register, switch to login or auto login
         setCurrentForm("login");
         setFormError("Registration successful! Please log in.");
       }
@@ -76,39 +112,42 @@ const AuthenticationPage = () => {
             </p>
           </div>
 
-          {/* Email input (visual) */}
           <div className="space-y-3">
-            {currentForm === "register" ? (
+            {currentForm === "register" && (
               <div>
                 <label className="text-xs font-semibold text-muted-foreground mb-2 block uppercase tracking-wider">Full Name</label>
                 <input
                   type="text"
                   placeholder="Your Name"
-                  className="w-full h-12 px-5 rounded-full bg-muted/60 border-0 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all"
+                  className={`w-full h-12 px-5 rounded-full bg-muted/60 border-0 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 transition-all ${fieldErrors.name ? "ring-2 ring-destructive/50" : "focus:ring-primary/30"}`}
                   value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  onChange={(e) => { setName(e.target.value); setFieldErrors((prev) => ({ ...prev, name: undefined })); }}
                 />
+                {fieldErrors.name && <p className="text-xs text-destructive mt-1 ml-2">{fieldErrors.name}</p>}
               </div>
-            ) : null}
+            )}
+
             <div>
               <label className="text-xs font-semibold text-muted-foreground mb-2 block uppercase tracking-wider">Email</label>
               <input
                 type="email"
                 placeholder="you@example.com"
-                className="w-full h-12 px-5 rounded-full bg-muted/60 border-0 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all"
+                className={`w-full h-12 px-5 rounded-full bg-muted/60 border-0 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 transition-all ${fieldErrors.email ? "ring-2 ring-destructive/50" : "focus:ring-primary/30"}`}
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => { setEmail(e.target.value); setFieldErrors((prev) => ({ ...prev, email: undefined })); }}
               />
+              {fieldErrors.email && <p className="text-xs text-destructive mt-1 ml-2">{fieldErrors.email}</p>}
             </div>
+
             <div>
               <label className="text-xs font-semibold text-muted-foreground mb-2 block uppercase tracking-wider">Password</label>
               <div className="relative">
                 <input
                   type={showPassword ? "text" : "password"}
                   placeholder="••••••••"
-                  className="w-full h-12 px-5 pr-12 rounded-full bg-muted/60 border-0 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all"
+                  className={`w-full h-12 px-5 pr-12 rounded-full bg-muted/60 border-0 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 transition-all ${fieldErrors.password ? "ring-2 ring-destructive/50" : "focus:ring-primary/30"}`}
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e) => { setPassword(e.target.value); setFieldErrors((prev) => ({ ...prev, password: undefined })); }}
                 />
                 <button
                   type="button"
@@ -118,27 +157,30 @@ const AuthenticationPage = () => {
                   {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
               </div>
+              {fieldErrors.password && <p className="text-xs text-destructive mt-1 ml-2">{fieldErrors.password}</p>}
             </div>
           </div>
+
+          {formError && (
+            <p className={`text-sm mt-2 ${formError.startsWith("Registration") ? "text-green-600 dark:text-green-400" : "text-destructive"}`}>
+              {formError}
+            </p>
+          )}
 
           <Button
             type="submit"
             className="w-full h-12 text-[15px] font-semibold rounded-full bg-primary text-primary-foreground hover:bg-primary/90 shadow-glow transition-all disabled:opacity-60 disabled:cursor-not-allowed"
             disabled={isSubmitting}
           >
-            {currentForm === "register" ? "Sign Up" : "Sign In"}
+            {isSubmitting ? "Please wait…" : currentForm === "register" ? "Sign Up" : "Sign In"}
           </Button>
-
-          {formError ? <p className="text-sm text-destructive mt-2">{formError}</p> : null}
 
           <div className="text-center">
             {currentForm === "register" ? (
               <p className="text-muted-foreground mt-2 text-[15px]">
-                Already have an account ?{" "}
+                Already have an account?{" "}
                 <span
-                  onClick={() => {
-                    setCurrentForm("login");
-                  }}
+                  onClick={() => switchForm("login")}
                   className="text-secondary-foreground cursor-pointer font-semibold underline"
                 >
                   Sign In
@@ -146,11 +188,9 @@ const AuthenticationPage = () => {
               </p>
             ) : (
               <p className="text-muted-foreground mt-2 text-[15px]">
-                Don't have an account ?{" "}
+                Don't have an account?{" "}
                 <span
-                  onClick={() => {
-                    setCurrentForm("register");
-                  }}
+                  onClick={() => switchForm("register")}
                   className="text-secondary-foreground cursor-pointer font-semibold underline"
                 >
                   Sign Up
