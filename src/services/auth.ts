@@ -13,7 +13,7 @@ export interface LoginUserPayload {
 
 export const registerNewUser = async (payload: RegisterUserPayload) => {
   try {
-    const response = await fetch(`${BACKEND_URL}/auth/register`, {
+    const response = await fetch(`${BACKEND_URL}/auth/signup`, {
       method: "POST",
       headers: {
         "content-type": "application/json",
