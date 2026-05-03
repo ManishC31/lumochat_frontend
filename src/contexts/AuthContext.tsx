@@ -132,8 +132,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     const token = localStorage.getItem("chat_token");
 
-    console.log("token:", token);
-
     const newSocket = io(SOCKET_URL, {
       transports: ["polling", "websocket"],
       reconnection: true,
