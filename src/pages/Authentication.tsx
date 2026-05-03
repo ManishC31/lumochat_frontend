@@ -112,6 +112,30 @@ const AuthenticationPage = () => {
             </p>
           </div>
 
+          {currentForm === "login" && (
+            <div className="rounded-2xl border border-border bg-muted/40 p-4 space-y-3">
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Test Credentials</p>
+              <div className="grid grid-cols-2 gap-2">
+                {[
+                  { label: "User 1", email: "testing1@gmail.com", password: "Password123" },
+                  { label: "User 2", email: "testing2@gmail.com", password: "Password123" },
+                ].map((cred) => (
+                  <button
+                    key={cred.label}
+                    type="button"
+                    onClick={() => { setEmail(cred.email); setPassword(cred.password); setFieldErrors({}); setFormError(""); }}
+                    className="text-left rounded-xl bg-background border border-border px-3 py-2.5 hover:border-primary/50 hover:bg-primary/5 transition-all group"
+                  >
+                    <p className="text-xs font-semibold text-foreground group-hover:text-primary transition-colors">{cred.label}</p>
+                    <p className="text-[11px] text-muted-foreground mt-0.5 truncate">{cred.email}</p>
+                    <p className="text-[11px] text-muted-foreground">{cred.password}</p>
+                  </button>
+                ))}
+              </div>
+              <p className="text-[11px] text-muted-foreground">Click a card to fill in the credentials.</p>
+            </div>
+          )}
+
           <div className="space-y-3">
             {currentForm === "register" && (
               <div>
